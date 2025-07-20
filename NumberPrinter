@@ -1,0 +1,84 @@
+/*two threads, one to print even numbers and another to print odd numbers, using the wait() and notify() methods for coordination. The threads implement the Runnable interface:
+Runnable interface
+
+synchronized block for thread safety
+
+wait() and notify() for coordination between threads*/
+
+class NumberPrinter {
+    private int number = 1;
+    private final int MAX = 20; // You can change this limit as needed
+    private boolean isOddTurn = true;
+
+    public synchronized void printOdd() {
+        while (number <= MAX) {
+            while (!isOddTurn) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            if (number <= MAX) {
+                System.out.println("Odd: " + number);
+                number++;
+                isOddTurn = false;
+                notify();
+            }
+        }
+    }
+
+    public synchronized void printEven() {
+        while (number <= MAX) {
+            while (isOddTurn) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            if (number <= MAX) {
+                System.out.println("Even: " + number);
+                number++;
+                isOddTurn = true;
+                notify();
+            }
+        }
+    }
+}
+
+class OddRunnable implements Runnable {
+    private final NumberPrinter printer;
+
+    public OddRunnable(NumberPrinter printer) {
+        this.printer = printer;
+    }
+
+    public void run() {
+        printer.printOdd();
+    }
+}
+
+class EvenRunnable implements Runnable {
+    private final NumberPrinter printer;
+
+    public EvenRunnable(NumberPrinter printer) {
+        this.printer = printer;
+    }
+
+    public void run() {
+        printer.printEven();
+    }
+}
+
+public class OddEvenThreads {
+    public static void main(String[] args) {
+        NumberPrinter printer = new NumberPrinter();
+
+        Thread oddThread = new Thread(new OddRunnable(printer));
+        Thread evenThread = new Thread(new EvenRunnable(printer));
+
+        oddThread.start();
+        evenThread.start();
+    }
+}
